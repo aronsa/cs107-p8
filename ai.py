@@ -1,6 +1,7 @@
 from random import randint
 from players import *
 from pathfinder import *
+from enum import *
 class InvalidRequestException(Exception):
     pass
 class AIStage(Enum):
@@ -104,7 +105,7 @@ class MyAISquirrel(AISquirrel):
         super().__init__(coordinate, board)
         self.myTicks = 0
         self.setSpeed((0,0))
-        self.myPathfinder = Pathfinder(self.board,self)
+        self.myPathfinder = PathFinder(self.board,self)
         self.stage = AIStage("home")
         self.stageInit= True
         self.queuedPath = []
@@ -166,7 +167,8 @@ class MyAISquirrel(AISquirrel):
                 try:
                     self.goalTile = self.getExit()
                     path = self.myPathfinder.findPath(self.goalTile)
-                    print("found path: ",path) 
+                    path = path[1:]
+                    print("found path: ",path)
                     self.queuedPath = self.queuedPath + path
                     self.stageInit = False
                 except:
@@ -175,8 +177,9 @@ class MyAISquirrel(AISquirrel):
                 print("WE DONE!")
             if(self.getFuel()>= 1 + self.FUELBUFFER):
                 if(len(self.queuedPath)>0):
-                    self.move(self.queuedPath.pop(0)) #we should move the first item in the list
-                else: print("uh oh... we done fucked up (ai.MyAISquirrel.clockTick())")
+                    d = self.queuedPath.pop(0)
+                    print("moving ",d)
+                    self.move(d[0],d[1]) #we should move the first item in the list
             #now we should have a path or we are done
         #print("The stones are here!")
         #for stone in self.getStones():
