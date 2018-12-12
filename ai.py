@@ -150,47 +150,10 @@ class MyAISquirrel(AISquirrel):
     def clockTick(self,fps,num):
         super().clockTick(fps,num)
 
-        # For example, if I wanted to step to the health pack (default tile)
-        if (self.myTicks < 1):
-            self.move(1,1)
-
-        self.myTicks += 1
-
-        if (self.myTicks % 4 != 0):
-            return
-
         print("Fuel is")
         print(self.getFuel())
 
-        print("The stones are here!")
-        for stone in self.getStones():
-            print(stone)
+        #print("The stones are here!")
+        #for stone in self.getStones():
+        #    print(stone)
 
-        if (self.myTicks % 20 == 0):
-            self.fireStone(-1,-1)
-
-        if (self.myTicks % 40 == 0):
-            print('getting the position of all ferrets')
-            for ferretPos in self.getFerrets():
-                print(ferretPos)
-
-        if (self.myTicks % 80 == 0):
-            print('getting the position of all health packs')
-            for healthPack in self.getHealthPacks():
-                print(healthPack)
-
-        if (self.myTicks % 160 == 0):
-            print('getting the position of the exit tile')
-            print(self.getExit())
-
-        x = randint(-1, 1)
-        y = randint(-1, 1)
-        print("I am doing something boring..")
-        print(x,y)
-        if (self.canMove(x,y)):
-            print("Moving..")
-            self.move(x,y)
-        else:
-            print("Not moving..")
-
-        return
