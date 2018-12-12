@@ -19,7 +19,7 @@ class AISquirrel(Squirrel):
         self.tileType = "squirrel"
         self.aiTicks = 0
         self.STONESPEED = 8
-
+        self.ferretGuess = []
     # Turn *off* the ability to set a speed
     def setSpeed(self,speed):
         return
@@ -112,6 +112,7 @@ class MyAISquirrel(AISquirrel):
         self.FUELBUFFER = 20
         self.goalTile = None #where we are currently trying to navigate to
     # Get the current fuel
+        self.fire = 0
     def getFuel(self):
         return self.board.state.getFuel()
 
@@ -129,8 +130,14 @@ class MyAISquirrel(AISquirrel):
     # Where x,y are in the range [-1,1] (integers)
     # Uses (|x| + |y|) * 3 fuel
     def fireStone(self,x,y):
-        super().fireStone(x,y)
-
+        if(self.fire<=30 and self.getFuel() >= self.FUELBUFFER):
+            try:
+                super().fireStone(x,y)
+            except:
+                print("shooters shoot")
+        elif(self.fire >=40): #will reset after giving squirrel time to move
+            self.fire = 0
+        self.fire +=1
     # Gets the position of all stones on the board
     # 
     # Uses 0 fuel each time it is called
@@ -162,31 +169,45 @@ class MyAISquirrel(AISquirrel):
         
         print("Fuel: ",self.getFuel())
         print("Stage: ",self.stage)
+        for f in self.ferretGuess:
+            if(self.getX()==f[0]):
+                if(self.getY()>f[1]):
+                    self.fireStone(0,-1)
+                else:
+                    self.fireStone(0,1)
+            elif(self.getY()==f[1]):
+                if(self.getX()>f[0]):
+                    self.fireStone(-1,0)
+                else:
+                    self.fireStone(1,0)
+
 
         if(self.stage == AIStage("healthpacks")):
             if(self.stageInit and self.getFuel() >= 30+self.FUELBUFFER): #we wanna make sure we have enough fuel for the operation
-                try:
-                    waypoints = self.getHealthPacks()
-                    self.goalTile = waypoints[0]
-                    path = self.myPathfinder.findPath(self.goalTile)
-                    path = path[1:]
-                    waypoints = waypoints[1:]
-                    #will go to all healthpacks
-                    for w in waypoints:
-                        path = self.myPathfinder.findPathWaypoint(self.goalTile,w)
-                        self.goalTile = w
-
-                    print("found path: ",path)
-                    self.queuedPath = self.queuedPath + path
-                    self.stageInit = False
-                except:
-                    print("WARNING pathfinder search failed.")
+                #adding a ferret area
+                self.ferretGuess = self.getFerrets()
+                waypoints = self.getHealthPacks()
+                self.goalTile = waypoints[0]
+                print("goal: ",waypoints[0])
+                path = self.myPathfinder.findPath(self.goalTile)
+                path = path[1:]
+                waypoints = waypoints[1:]
+                #will go to all healthpacks
+                for w in waypoints:
+                    path = self.myPathfinder.findPathWaypoint(self.goalTile,w)
+                    self.goalTile = w
+                    print("addt'l waypoint: goal ",w)
+                print("found path: ",path)
+                self.queuedPath = self.queuedPath + path
+                self.stageInit = False
             
             if(self.goalTile == (self.getX(),self.getY()) and self.goalTile != None):
                 print("WE DONE!")
                 self.stageInit = True
                 self.stage = AIStage("home")
-
+            
+            
+            
             elif(self.getFuel()>= 1 + self.FUELBUFFER):
                 if(len(self.queuedPath)>0):
                     d = self.queuedPath.pop(0)
@@ -197,6 +218,8 @@ class MyAISquirrel(AISquirrel):
             if(self.stageInit and self.getFuel() >= 30+self.FUELBUFFER): #we wanna make sure we have enough fuel for the operation
                 try:
                     self.goalTile = self.getExit()
+                    print("goal is",self.goalTile)
+                    self.myPathfinder = PathFinder(self.board,self)
                     path = self.myPathfinder.findPath(self.goalTile)
                     path = path[1:]
                     print("found path: ",path)

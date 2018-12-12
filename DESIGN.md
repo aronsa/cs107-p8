@@ -6,9 +6,9 @@ Sam Aronson
 
 For this project, the goal is to reach the exit tile before running out of fuel. To reach this goal, managing  fuel consumption is crucial and the primary goal of the AI. In this document, first we will discuss the approach the AI will take to optimize fuel consumption, and then the specific techniques and approaches that will be used for each individual task.
 
-### Fuel Management and Optimization
+####Fuel Management and Optimization
 
-First, we must understand the factors that affect fuel throughout the game for the AI. These are described in Figure 1 below.
+First, we must understand the factors that affect fuel throughout the game for the AI. These are described in Figure 1 below. *the cost of firing a stone is 3-6 fuel, depending on the directional vector.*
 
 ![img](imgs_design/fuelconsumption.png)
 
@@ -24,49 +24,29 @@ Instead, to conserve fuel the following goals will be set for the AI
 * Seek out healthpacks
 * Try to minimize the number of times information about ferret and exit tile locations are quered
 
-#### AI Design
+###AI Design
 
 ![img](imgs_design/overview.png)
 
-The AI wll be designed to execute actions using three components shown in Figure 2: a path manager, fuel manager, and shooting manager (if I have time). Additionally, a stone tracker will be implemented to aid the decision making components.
+The AI wll be designed to execute actions using three components shown in Figure 2: a path manager, fuel manager, and shooting manager.
 
-The fuel manager will ensure that enough fuel has been accumulated for whatever the next task is (be it moving to another part of the map, or waiting to move). The fuel manager will first "save up" fuel to find the healthpacks and approach the nearest one.
+The fuel manager will ensure that enough fuel has been accumulated for whatever the next task is (be it moving to another part of the map, or waiting to move). The fuel manager will first "save up" fuel to find the healthpacks and approach the nearest one. 
 
 The path manager will determine the path the squirrel should take when it is time to mvoe to either a healthpack or the exit tile
 
 The shooting manager will attempt to track the ferrets and shoot at them.
 
-The shooting manager and path manager will be informed by the stone/ferret tracker, which will attempt to track the stones to find the ferrets and avoid more dangerous regions of the map.
-
 ##### Fuel Manager
 
-The fuel manager will alternate between two stages.
-
-###### Fuel Collection:
-
- In this stage, the squirrel will be mostly stationary, only moving to avoid stones and gain the information needed to determine the next segement of the squirrel's path. The goal is to stockpile fuel until it is ready for the advancement stage.
-
-###### Advancement:
-
-In this stage, the path manager is enabled to go to it's next waypoint (either a healthpack or the exit tile.
+The fuel manager will ensure that there is enough fuel stored up by the squirrel to execute whatever the next action will be. This also will include a buffer to account for potential attacks by ferrets. (Currently, it is set at 20 fuel). If there is not enough fuel for the next stage, it will not occur.
 
 ##### Path Manager:
 
-The path manager will attempt to generate paths for the AI to execute. It will use the methods built in project 6 to find an acceptable path. It will be informed by the stone/ferret tracker, to try to avoid "hotspots" of activity. If this is impossible, we will use additional caution in these areas, attempting to track the ferrets.
+The path manager will attempt to generate paths for the AI to execute. It will use the methods built in project 6 to find an acceptable path. It will first attempt to find all of the healthpacks. After, it will seek out the final square.
 
 ##### Shooting Manager:
 
-The shooting manager will use the getFerret() method and predictions made by the stone/ferret tracker to try to accurately assess where the squirrels will be to shoot the stones in the correct direction.
-
-##### Stone/ferret tracker:
-
-The stone/ferret tracker will attempt to use getStone() to find stones and ferrets. As shown in Figure 3, the stones locations may change every clocktick, but they should be trackable to their original position, which will be very close to the ferret. By tracking the path of the stone, we will be able to predict it's future path (helpful for avoidance), and the location of the shooter
-
-![img](imgs_design/stone_backprop.png)
-
-Furthermore, if the shooter is moving, we will at the very least be able to create a heatmap of tiles to attempt to avoid. By using these methods, we can get "close" to the dangerous regions, and then use getFerret() to more accurately shoot at the ferrets. We can also attempt to avoid these more dangerous areas by trying to generate a path around them. 
-
-![img](imgs_design/ferret_heatmap.png)
+The shooting manager will use the getFerret() method to predict places that the ferret may be. As they are on a fixed path (it is assumed), eventually the ferret will return to the square. When the AI is in line (either in the x or y direction of the ferret), it will launch a barrage of 30 stones to attempt to kill the ferret. This will occur at some point on the path.
 
 ### Conclusion
 

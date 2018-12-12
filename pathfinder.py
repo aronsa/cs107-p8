@@ -32,6 +32,7 @@ class Waypoint:
 class PathFinder:
     def __init__(self, board, player):
         # The underlying game board on which tiles live
+        
         self.board   = board
         
         # The underlying player object
@@ -115,6 +116,26 @@ class PathFinder:
                 result = result.prev
             path.insert(0,(result.x,result.y))
             return path
+
+
+    def findPathWaypoint(self,fromCoordinate, toCoordinate):
+#        print("starting at ",self.startX,self.startY)
+#        print("looking for ",toCoordinate)
+        startX = fromCoordinate[0]
+        startY = fromCoordinate[1]
+        self.visited[startX][startY]=True
+        result= self.findNextFrontier([Waypoint(startX,startY,0,None)],toCoordinate)
+#        print("result",result)
+        if(result==False): return result
+        if(result==None): return False
+        else:
+            path=[]
+            while(result.prev!=None):
+                path.insert(0,(result.x-result.prev.x,result.y-result.prev.y))
+                result = result.prev
+            path.insert(0,(result.x,result.y))
+            return path
+
     def findNextFrontier(self,frontier,toCoordinate):
         newFrontier = []
         if(frontier==[]):
