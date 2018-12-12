@@ -106,11 +106,11 @@ class MyAISquirrel(AISquirrel):
         self.myTicks = 0
         self.setSpeed((0,0))
         self.myPathfinder = PathFinder(self.board,self)
-        self.stage = AIStage("home")
+        self.stage = AIStage("healthpacks")
         self.stageInit= True
         self.queuedPath = []
         self.FUELBUFFER = 20
-        self.goalTile = (self.getX(),self.getY()) #where we are currently trying to navigate to
+        self.goalTile = None #where we are currently trying to navigate to
     # Get the current fuel
     def getFuel(self):
         return self.board.state.getFuel()
@@ -162,7 +162,38 @@ class MyAISquirrel(AISquirrel):
         
         print("Fuel: ",self.getFuel())
         print("Stage: ",self.stage)
-        if(self.stage == AIStage("home")):
+
+        if(self.stage == AIStage("healthpacks")):
+            if(self.stageInit and self.getFuel() >= 30+self.FUELBUFFER): #we wanna make sure we have enough fuel for the operation
+                try:
+                    waypoints = self.getHealthPacks()
+                    self.goalTile = waypoints[0]
+                    path = self.myPathfinder.findPath(self.goalTile)
+                    path = path[1:]
+                    waypoints = waypoints[1:]
+                    #will go to all healthpacks
+                    for w in waypoints:
+                        path = self.myPathfinder.findPathWaypoint(self.goalTile,w)
+                        self.goalTile = w
+
+                    print("found path: ",path)
+                    self.queuedPath = self.queuedPath + path
+                    self.stageInit = False
+                except:
+                    print("WARNING pathfinder search failed.")
+            
+            if(self.goalTile == (self.getX(),self.getY()) and self.goalTile != None):
+                print("WE DONE!")
+                self.stageInit = True
+                self.stage = AIStage("home")
+
+            elif(self.getFuel()>= 1 + self.FUELBUFFER):
+                if(len(self.queuedPath)>0):
+                    d = self.queuedPath.pop(0)
+                    print("moving ",d)
+                    self.move(d[0],d[1]) #we should move the first item in the list
+        
+        elif(self.stage == AIStage("home")):
             if(self.stageInit and self.getFuel() >= 30+self.FUELBUFFER): #we wanna make sure we have enough fuel for the operation
                 try:
                     self.goalTile = self.getExit()
@@ -173,7 +204,7 @@ class MyAISquirrel(AISquirrel):
                     self.stageInit = False
                 except:
                     print("WARNING pathfinder search failed.")
-            if(self.goalTile == (self.getX(),self.getY())):
+            if(self.goalTile == (self.getX(),self.getY()) and self.goalTile != None):
                 print("WE DONE!")
             if(self.getFuel()>= 1 + self.FUELBUFFER):
                 if(len(self.queuedPath)>0):
