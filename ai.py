@@ -1,8 +1,12 @@
 from random import randint
 from players import *
-
+from pathfinder import *
 class InvalidRequestException(Exception):
     pass
+class AIStage(Enum):
+    HEALTHPACKS = "healthpacks" #looking for healthpacks
+    ATTACK = "attack" #attacking squirrels
+    HOME = "home" #going home
 
 class AISquirrel(Squirrel):
     def __init__(self, coordinate, board):
@@ -100,7 +104,12 @@ class MyAISquirrel(AISquirrel):
         super().__init__(coordinate, board)
         self.myTicks = 0
         self.setSpeed((0,0))
-
+        self.myPathfinder = Pathfinder(self.board,self)
+        self.stage = AIStage("home")
+        self.stageInit= True
+        self.queuedPath = []
+        self.FUELBUFFER = 20
+        self.goalTile = (self.getX(),self.getY()) #where we are currently trying to navigate to
     # Get the current fuel
     def getFuel(self):
         return self.board.state.getFuel()
@@ -149,11 +158,28 @@ class MyAISquirrel(AISquirrel):
     # may not change).
     def clockTick(self,fps,num):
         super().clockTick(fps,num)
-
-        print("Fuel is")
-        print(self.getFuel())
-
+        
+        print("Fuel: ",self.getFuel())
+        print("Stage: ",self.stage)
+        if(self.stage == AIStage("home")):
+            if(self.stageInit and self.getFuel() >= 30+self.FUELBUFFER): #we wanna make sure we have enough fuel for the operation
+                try:
+                    self.goalTile = self.getExit()
+                    path = self.myPathfinder.findPath(self.goalTile)
+                    print("found path: ",path) 
+                    self.queuedPath = self.queuedPath + path
+                    self.stageInit = False
+                except:
+                    print("WARNING pathfinder search failed.")
+            if(self.goalTile == (self.getX(),self.getY())):
+                print("WE DONE!")
+            if(self.getFuel()>= 1 + self.FUELBUFFER):
+                if(len(self.queuedPath)>0):
+                    self.move(self.queuedPath.pop(0)) #we should move the first item in the list
+                else: print("uh oh... we done fucked up (ai.MyAISquirrel.clockTick())")
+            #now we should have a path or we are done
         #print("The stones are here!")
         #for stone in self.getStones():
         #    print(stone)
 
+        return
